@@ -1,10 +1,8 @@
 #include <Windows.h>
 #include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
 
-#include "Framework\include\Window.h"
+#include "Misc\include\AntiException.h"
+#include "App\include\App.h"
 #pragma warning(disable : 28251)
 
 void ShowConsole() {
@@ -18,27 +16,25 @@ int __stdcall WinMain(HINSTANCE hInstance,
 					  LPSTR lpCmdParameter,
 					  int nCmdShow)
 {
+	// Hoc them ve macro, hoc ban chat cua macro
 	ShowConsole();
-	//Cai tien them tu khoa inline, noexcept cho tung ham, truyen tham so duoi dang reference or pointer
-	Window Wnd(640, 480, L"Hello");
-
-	MSG msg;
-	INT GetResult = 0;
-	while ((GetResult = GetMessage(&msg, nullptr, 0,0)) > 0) { // Kiem tra xem return value cua GetMessages tra ve lon hon 0 ko, neu lon hon thi vong lap tiep tuc thuc thi
-		// Filter dung de loc 1 khoang value cua thong diep nao do, vd WM_MOUSEFIRST va WM_MOUSELAST
-		TranslateMessage(&msg); // Dich cac ki tu tren ban phim thanh thong diep WM_CHAR
-		DispatchMessage(&msg); // Gui thong diep den Window Proceduce
+	try {
+		App::GetAppInstance().Init();
+		DWORD ExitCode = App::GetAppInstance().Run();
+		return ExitCode;
+		
 	}
-
-	if (GetResult == 0) { // If GetMessages return WM_QUIT
-		return msg.wParam;
+	catch (const Window::Exception& e) {
+		MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
+		return e.GetErrorCode();
 	}
-	else if (GetResult == -1) { // If GetMessages got error
-		DWORD error = GetLastError();
-		return error;
+	catch (const std::exception& e) {
+		MessageBoxA(nullptr, e.what(), "Return value 2: Standart Exception", MB_OK | MB_ICONEXCLAMATION);
+		return 2;
 	}
-	else { // If GetMessages return normally
-		return 0;
+	catch (...) {
+		MessageBoxA(nullptr, "No Detail Exception", "Return value 1: Unknow Exception", MB_OK | MB_ICONEXCLAMATION);
+		return 1;
 	}
-
+	return 0;
 }
